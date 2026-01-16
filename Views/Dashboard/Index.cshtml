@@ -1,0 +1,102 @@
+﻿@model SMS.Models.DashboardViewModel
+
+@{
+    ViewData["Title"] = "Admin Dashboard";
+}
+
+<div class="container mt-4">
+    <h2 class="mb-4">SMS Dashboard Summary</h2>
+
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white shadow mb-4">
+                <div class="card-body text-center">
+                    <h5>Total Students</h5>
+                    <h2 class="display-4">@Model.TotalStudents</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white shadow mb-4">
+                <div class="card-body text-center">
+                    <h5>Total Courses</h5>
+                    <h2 class="display-4">@Model.TotalCourses</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white shadow mb-4">
+                <div class="card-body text-center">
+                    <h5>Enrollments</h5>
+                    <h2 class="display-4">@Model.TotalEnrollments</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-dark shadow mb-4">
+                <div class="card-body text-center">
+                    <h5>Avg. Marks</h5>
+                    <h2 class="display-4">@Math.Round(Model.AverageMarks, 1)%</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0">Recently Joined Students</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Reg ID</th>
+                                <th>Name</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var s in Model.RecentStudents)
+                            {
+                                <tr>
+                                    <td>@s.StudentRegId</td>
+                                    <td>@s.User?.FullName</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0">Latest Enrollments</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Student</th>
+                                <th>Course</th>
+                                <th>Grade</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var e in Model.RecentEnrollments)
+                            {
+                                <tr>
+                                    <td>@e.Student?.User?.FullName</td>
+                                    <td>@e.Course?.Title</td>
+                                    <td><span class="badge bg-primary">@e.Grade</span></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

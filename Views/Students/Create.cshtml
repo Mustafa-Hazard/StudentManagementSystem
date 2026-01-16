@@ -1,0 +1,42 @@
+﻿@model SMS.Models.Entities.Student
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 shadow-lg p-4 rounded bg-white border-top border-primary border-4">
+            <h3 class="text-center mb-4"><i class="fa-solid fa-user-plus text-primary"></i> Register New Student</h3>
+            <hr />
+            <form asp-action="Create">
+                <div asp-validation-summary="All" class="text-danger small mb-3"></div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Full Name</label>
+                    <input name="FullName" class="form-control" placeholder="Mustafa Muhammad Iqbal" required />
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="StudentRegId" class="form-label fw-bold">Registration ID</label>
+                        <input asp-for="StudentRegId" class="form-control" placeholder="e.g. FA21-BCS-001" required />
+                    </div>
+                 
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">University Email</label>
+                    <input name="Email" type="email" class="form-control" placeholder="name@university.edu" required />
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label fw-bold">Account Password</label>
+                    <input name="Password" type="password" class="form-control" required />
+                    <small class="text-muted">Must be at least 6 characters long.</small>
+                </div>
+
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-primary py-2 fw-bold">Save Student Record</button>
+                    <a asp-action="Index" class="btn btn-outline-secondary">Cancel and Go Back</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

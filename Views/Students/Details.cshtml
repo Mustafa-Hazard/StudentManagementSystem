@@ -1,0 +1,33 @@
+﻿@model SMS.Models.Entities.Student
+
+<div class="container mt-4">
+    <div class="card shadow border-0">
+        <div class="card-header bg-dark text-white py-3">
+            <h4 class="mb-0">Student Profile: @Model.User?.FullName</h4>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-3 text-center border-end">
+                    <i class="fa-solid fa-circle-user fa-8x text-light mb-3"></i>
+                    <h5 class="text-primary">@Model.StudentRegId</h5>
+                </div>
+                <div class="col-md-9 ps-4">
+                    <dl class="row mt-3">
+                        <dt class="col-sm-4">Full Name:</dt>
+                        <dd class="col-sm-8">@Model.User?.FullName</dd>
+
+                        <dt class="col-sm-4">Email Address:</dt>
+                        <dd class="col-sm-8">@Model.User?.Email</dd>
+
+                        <dt class="col-sm-4">Department:</dt>
+                        <dd class="col-sm-8">@Model.Department</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+        <div class="card-footer bg-light">
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning px-4">Edit</a>
+            <a asp-action="Index" class="btn btn-outline-dark px-4">Back</a>
+        </div>
+    </div>
+</div>

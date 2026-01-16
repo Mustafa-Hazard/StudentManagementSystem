@@ -1,0 +1,31 @@
+﻿@model SMS.Models.Entities.Course
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 shadow-lg p-4 rounded">
+            <h4 class="text-center mb-3">Edit Course</h4>
+            <form asp-action="Edit">
+                <input type="hidden" asp-for="Id" />
+                <div class="mb-3">
+                    <label asp-for="CourseCode" class="form-label">Course Code</label>
+                    <input asp-for="CourseCode" class="form-control" />
+                    <span asp-validation-for="CourseCode" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Title" class="form-label">Title</label>
+                    <input asp-for="Title" class="form-control" />
+                    <span asp-validation-for="Title" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Credits" class="form-label">Credit Hours</label>
+                    <input asp-for="Credits" class="form-control" />
+                    <span asp-validation-for="Credits" class="text-danger"></span>
+                </div>
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-primary">Update Changes</button>
+                    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

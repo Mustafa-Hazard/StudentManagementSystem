@@ -1,0 +1,30 @@
+﻿@model SMS.Models.Entities.Attendance
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-5 shadow p-4 rounded bg-white border-top border-info border-4">
+            <h4 class="text-center mb-4">Mark Daily Attendance</h4>
+            <form asp-action="Create">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Student</label>
+                    <select asp-for="StudentId" class="form-select" asp-items="ViewBag.StudentId"></select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Course</label>
+                    <select asp-for="CourseId" class="form-select" asp-items="ViewBag.CourseId"></select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Date</label>
+                    <input asp-for="Date" type="date" class="form-control" value="@DateTime.Now.ToString("yyyy-MM-dd")" />
+                </div>
+                <div class="form-check form-switch mb-4">
+                    <input asp-for="IsPresent" class="form-check-input" type="checkbox" checked>
+                    <label class="form-check-label fw-bold" asp-for="IsPresent">Mark as Present</label>
+                </div>
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-info text-white fw-bold">Save Attendance</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

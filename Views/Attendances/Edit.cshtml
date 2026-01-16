@@ -1,0 +1,38 @@
+﻿@model SMS.Models.Entities.Attendance
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 shadow p-4 rounded">
+            <h4 class="text-center">Update Attendance Status</h4>
+            <hr />
+            <form asp-action="Edit">
+                <input type="hidden" asp-for="Id" />
+
+                <div class="mb-3">
+                    <label asp-for="Date" class="form-label"></label>
+                    <input asp-for="Date" class="form-control" type="date" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Student</label>
+                    <select asp-for="StudentId" class="form-select" asp-items="ViewBag.StudentId"></select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Course</label>
+                    <select asp-for="CourseId" class="form-select" asp-items="ViewBag.CourseId"></select>
+                </div>
+
+                <div class="form-check mb-3">
+                    <input asp-for="IsPresent" class="form-check-input" />
+                    <label class="form-check-label">Is Present?</label>
+                </div>
+
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-primary">Update Record</button>
+                    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

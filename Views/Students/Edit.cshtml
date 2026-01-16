@@ -1,0 +1,32 @@
+﻿@model SMS.Models.Entities.Student
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 shadow p-4 rounded bg-white border-top border-info border-4">
+            <h4 class="mb-4">Update Student Details</h4>
+            <form asp-action="Edit">
+                <input type="hidden" asp-for="Id" />
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Full Name</label>
+                    <input name="FullName" value="@Model.User?.FullName" class="form-control" required />
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="StudentRegId" class="form-label fw-bold"></label>
+                    <input asp-for="StudentRegId" class="form-control" />
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Department" class="form-label fw-bold"></label>
+                    <input asp-for="Department" class="form-control" />
+                </div>
+
+                <div class="d-grid gap-2 mt-4">
+                    <button type="submit" class="btn btn-info text-white fw-bold">Update Record</button>
+                    <a asp-action="Index" class="btn btn-outline-secondary">Back to List</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
