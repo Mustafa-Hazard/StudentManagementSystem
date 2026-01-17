@@ -9,7 +9,8 @@ using SMS.Models.ViewModels;
 
 namespace SMS.Controllers
 {
-    [Authorize(Roles = "Admin,Teacher")] // 👈 RBAC: Sirf Authorized staff hi access kar sakta hai
+    // 👈 Controller level par sab ko allow karein, actions par restriction lagayenge
+    [Authorize(Roles = "Admin,Teacher,Student")]
     public class StudentsController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -21,18 +22,18 @@ namespace SMS.Controllers
             _userManager = userManager;
         }
 
-        // GET: Students
+        // 🟢 INDEX: List of Students (Staff Only)
+        [Authorize(Roles = "Admin,Teacher")]
         public async Task<IActionResult> Index()
         {
             var userId = _userManager.GetUserId(User);
 
-            // 1. Agar Admin hai toh saari list dikhao
             if (User.IsInRole("Admin"))
             {
                 return View(await _context.Students.Include(s => s.User).ToListAsync());
             }
 
-            // 2. Agar Teacher hai toh sirf apne courses ke enrolled students dikhao
+            // Teacher filtering logic
             if (User.IsInRole("Teacher"))
             {
                 var teacher = await _context.Teachers.FirstOrDefaultAsync(t => t.UserId == userId);
@@ -51,7 +52,7 @@ namespace SMS.Controllers
             return View(new List<Student>());
         }
 
-        // GET: Students/Details/5
+        // 🔵 DETAILS: Profile View
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null) return NotFound();
@@ -66,14 +67,10 @@ namespace SMS.Controllers
             return View(student);
         }
 
-        // GET: Students/Create
-        [Authorize(Roles = "Admin")] // 👈 Security: Registration sirf Admin kar sakta hai
-        public IActionResult Create()
-        {
-            return View();
-        }
+        // 🟡 CREATE: Add New Student (Admin Only)
+        [Authorize(Roles = "Admin")]
+        public IActionResult Create() => View();
 
-        // POST: Students/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin")]
@@ -81,113 +78,103 @@ namespace SMS.Controllers
         {
             if (ModelState.IsValid)
             {
-                // 1. Create Identity User
                 var user = new ApplicationUser { UserName = Email, Email = Email, FullName = FullName };
                 var result = await _userManager.CreateAsync(user, Password);
 
                 if (result.Succeeded)
                 {
-                    // 2. Assign Student Role
                     await _userManager.AddToRoleAsync(user, "Student");
-
-                    // 3. Link Student record with Identity ID
                     student.UserId = user.Id;
                     _context.Add(student);
                     await _context.SaveChangesAsync();
-
                     return RedirectToAction(nameof(Index));
                 }
 
-                foreach (var error in result.Errors)
-                {
-                    ModelState.AddModelError(string.Empty, error.Description);
-                }
+                foreach (var error in result.Errors) ModelState.AddModelError(string.Empty, error.Description);
             }
             return View(student);
         }
 
-        // GET: Students/Edit/5
+        // 🟠 EDIT: Profile Update
+        [Authorize(Roles = "Admin,Teacher")]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null) return NotFound();
-
             var student = await _context.Students.Include(s => s.User).FirstOrDefaultAsync(s => s.Id == id);
-            if (student == null) return NotFound();
-
-            return View(student);
+            return student == null ? NotFound() : View(student);
         }
 
-        // POST: Students/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin,Teacher")]
         public async Task<IActionResult> Edit(int id, Student student)
         {
             if (id != student.Id) return NotFound();
-
             if (ModelState.IsValid)
             {
-                try
-                {
-                    _context.Update(student);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!StudentExists(student.Id)) return NotFound();
-                    else throw;
-                }
+                _context.Update(student);
+                await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
             return View(student);
         }
 
-        // POST: Students/Delete/5
+        // 🔴 DELETE: Remove Student (Admin Only)
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Admin")] // 👈 Security: Sirf Admin delete kar sakta hai
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var student = await _context.Students.FindAsync(id);
-            if (student != null)
-            {
-                _context.Students.Remove(student);
-            }
+            if (student != null) _context.Students.Remove(student);
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
-        [Authorize(Roles = "Admin,Student")] //
-        public async Task<IActionResult> DownloadTranscript(int id)
+
+        // 📄 PDF TRANSCRIPT: Download logic (Fixed 404 & Access Denied)
+        public async Task<IActionResult> DownloadTranscript(int? id)
         {
-            // 1. Student aur uski enrollments ka data nikalna
-            var student = await _context.Students
+            var userId = _userManager.GetUserId(User);
+            int targetId;
+
+            // Auto-detect ID if user is a Student
+            if (id == null && User.IsInRole("Student"))
+            {
+                var student = await _context.Students.FirstOrDefaultAsync(s => s.UserId == userId);
+                if (student == null) return NotFound();
+                targetId = student.Id;
+            }
+            else if (id != null)
+            {
+                targetId = id.Value;
+            }
+            else
+            {
+                return BadRequest("Student ID required.");
+            }
+
+            var studentData = await _context.Students
                 .Include(s => s.User)
                 .Include(s => s.Enrollments).ThenInclude(e => e.Course)
-                .FirstOrDefaultAsync(s => s.Id == id);
+                .FirstOrDefaultAsync(s => s.Id == targetId);
 
-            if (student == null) return NotFound();
+            if (studentData == null) return NotFound();
 
-            // 2. GPA Calculate karna
-            double totalMarks = student.Enrollments.Where(e => e.Marks != null).Sum(e => (double)e.Marks);
-            double avgMarks = student.Enrollments.Any() ? totalMarks / student.Enrollments.Count : 0;
+            double totalMarks = studentData.Enrollments.Where(e => e.Marks != null).Sum(e => (double)e.Marks);
+            double avgMarks = studentData.Enrollments.Any() ? totalMarks / studentData.Enrollments.Count : 0;
 
             var viewModel = new TranscriptViewModel
             {
-                Student = student,
-                Enrollments = student.Enrollments.ToList(),
-                TotalGPA = avgMarks // Aap apne formula ke mutabiq change kar sakte hain
+                Student = studentData,
+                Enrollments = studentData.Enrollments.ToList(),
+                TotalGPA = avgMarks
             };
 
-            // 3. View ko PDF mein convert karke bhein
             return new ViewAsPdf("TranscriptPDF", viewModel)
             {
-                FileName = $"Transcript_{student.StudentRegId}.pdf",
-                PageSize = Rotativa.AspNetCore.Options.Size.A4,
-                CustomSwitches = "--footer-center \"Printed by NMEIS Portal\" --footer-font-size \"10\""
+                FileName = $"Transcript_{studentData.StudentRegId}.pdf",
+                PageSize = Rotativa.AspNetCore.Options.Size.A4
             };
-        }
-        private bool StudentExists(int id)
-        {
-            return _context.Students.Any(e => e.Id == id);
         }
     }
 }

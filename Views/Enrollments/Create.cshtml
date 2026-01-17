@@ -1,26 +1,33 @@
 ﻿@model SMS.Models.Entities.Enrollment
 
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-6 shadow p-4 rounded bg-white border-top border-warning border-4">
-            <h4 class="text-center mb-4">New Enrollment</h4>
-            <form asp-action="Create">
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Select Student</label>
-                    <select asp-for="StudentId" class="form-select" asp-items="ViewBag.StudentId"></select>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Select Course</label>
-                    <select asp-for="CourseId" class="form-select" asp-items="ViewBag.CourseId"></select>
-                </div>
-                <div class="mb-4">
-                    <label class="form-label fw-bold">Date</label>
-                    <input asp-for="EnrollmentDate" type="date" class="form-control" value="@DateTime.Now.ToString("yyyy-MM-dd")" />
-                </div>
-                <div class="d-grid">
-                    <button type="submit" class="btn btn-warning fw-bold">Confirm Enrollment</button>
-                </div>
-            </form>
-        </div>
+<div class="row justify-content-center mt-5">
+    <div class="col-md-6 border p-4 shadow-sm bg-white rounded">
+        <h4 class="text-primary mb-4"><i class="fa fa-user-plus"></i> New Enrollment</h4>
+
+        <form asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="text-danger small"></div>
+
+            <div class="mb-3">
+                <label class="form-label fw-bold">Select Student</label>
+                @* 👈 Check: asp-items ka naam "ViewBag.StudentId" hona chahiye *@
+                <select asp-for="StudentId" class="form-select" asp-items="ViewBag.StudentId">
+                    <option value="">-- Choose Student --</option>
+                </select>
+                <span asp-validation-for="StudentId" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-bold">Select Course</label>
+                <select asp-for="CourseId" class="form-select" asp-items="ViewBag.CourseId">
+                    <option value="">-- Choose Course --</option>
+                </select>
+                <span asp-validation-for="CourseId" class="text-danger"></span>
+            </div>
+
+            <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-primary">Enroll Now</button>
+                <a asp-action="Index" class="btn btn-light border">Cancel</a>
+            </div>
+        </form>
     </div>
 </div>

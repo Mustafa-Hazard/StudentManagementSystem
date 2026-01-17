@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace SMS.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260116174617_FixFullNameNullable")]
-    partial class FixFullNameNullable
+    [Migration("20260117081307_InitialCleanStart")]
+    partial class InitialCleanStart
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -277,11 +277,21 @@ namespace SMS.Migrations
                     b.Property<int>("Credits")
                         .HasColumnType("int");
 
-                    b.Property<string>("Title")
-                        .IsRequired()
+                    b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int?>("TeacherId")
+                        .IsRequired()
+                        .HasColumnType("int");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("TeacherId");
 
                     b.ToTable("Courses");
                 });
@@ -301,11 +311,10 @@ namespace SMS.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Grade")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<decimal?>("Marks")
-                        .HasColumnType("decimal(18,2)");
+                    b.Property<int?>("Marks")
+                        .HasColumnType("int");
 
                     b.Property<int>("StudentId")
                         .HasColumnType("int");
@@ -330,12 +339,14 @@ namespace SMS.Migrations
                     b.Property<DateTime>("DateOfBirth")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("Department")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("StudentRegId")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("UserId")
-                        .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
@@ -345,7 +356,7 @@ namespace SMS.Migrations
                     b.ToTable("Students");
                 });
 
-            modelBuilder.Entity("SMS.Models.Teacher", b =>
+            modelBuilder.Entity("SMS.Models.Entities.Teacher", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -438,6 +449,17 @@ namespace SMS.Migrations
                     b.Navigation("Student");
                 });
 
+            modelBuilder.Entity("SMS.Models.Entities.Course", b =>
+                {
+                    b.HasOne("SMS.Models.Entities.Teacher", "Teacher")
+                        .WithMany()
+                        .HasForeignKey("TeacherId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Teacher");
+                });
+
             modelBuilder.Entity("SMS.Models.Entities.Enrollment", b =>
                 {
                     b.HasOne("SMS.Models.Entities.Course", "Course")
@@ -461,14 +483,12 @@ namespace SMS.Migrations
                 {
                     b.HasOne("SMS.Models.Entities.ApplicationUser", "User")
                         .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("UserId");
 
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("SMS.Models.Teacher", b =>
+            modelBuilder.Entity("SMS.Models.Entities.Teacher", b =>
                 {
                     b.HasOne("SMS.Models.Entities.ApplicationUser", "User")
                         .WithMany()
