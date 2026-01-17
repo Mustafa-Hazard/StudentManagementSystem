@@ -24,8 +24,8 @@ namespace SMS.Data // Namespace aapke project ke mutabiq theek kar diya hai
             }
 
             // 2. Create the Default Admin (User provided details)
-            var adminEmail = "nmeisSMS@SCD.com";
-            var adminPassword = "nmeisSCD0@";
+            var adminEmail = "nandni@gmail.com";
+            var adminPassword = "nandni123";
 
             if (await userManager.FindByEmailAsync(adminEmail) == null)
             {
@@ -33,7 +33,7 @@ namespace SMS.Data // Namespace aapke project ke mutabiq theek kar diya hai
                 {
                     UserName = adminEmail,
                     Email = adminEmail,
-                    FullName = "Mustafa Muhammad Iqbal", //
+                    FullName = "Nandni Lohana", //
                     EmailConfirmed = true
                 };
 

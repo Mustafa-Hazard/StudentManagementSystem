@@ -10,6 +10,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - NMEIS Portal</title>
 
+    @* Bootswatch Flatly Theme & Font Awesome Icons *@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/5.3.2/flatly/bootstrap.min.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
@@ -35,31 +36,48 @@
             background: #f8f9fa;
             border-top: 1px solid #dee2e6;
         }
+
+        .navbar {
+            transition: all 0.3s ease;
+        }
+
+        .nav-item .active {
+            border-bottom: 2px solid #fff;
+        }
     </style>
 </head>
 <body class="d-flex flex-column min-vh-100">
     <header>
         <nav class="navbar navbar-expand-lg bg-primary shadow-sm" data-bs-theme="dark">
             <div class="container-fluid">
-                <a class="navbar-brand" asp-controller="Dashboard" asp-action="Index">
+                @* Logic: Logo link based on User Role *@
+                <a class="navbar-brand" asp-controller="Dashboard" asp-action="@(User.IsInRole("Student") ? "StudentIndex" : "Index")">
                     <i class="fa-solid fa-shield-halved me-2"></i>NMEIS
                 </a>
 
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
-                        data-bs-target="#navbarColor01" aria-controls="navbarColor01"
-                        aria-expanded="false" aria-label="Toggle navigation">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarColor01">
                     <span class="navbar-toggler-icon"></span>
                 </button>
 
                 <div class="collapse navbar-collapse" id="navbarColor01">
                     <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                        @* 1. UNIVERSAL HOME LINK *@
                         <li class="nav-item">
-                            <a class="nav-link active" asp-controller="Dashboard" asp-action="Index">
-                                <i class="fa-solid fa-house me-1"></i> Home
-                            </a>
+                            @if (User.IsInRole("Student"))
+                            {
+                                <a class="nav-link" asp-controller="Dashboard" asp-action="StudentIndex">
+                                    <i class="fa-solid fa-house me-1"></i> My Dashboard
+                                </a>
+                            }
+                            else
+                            {
+                                <a class="nav-link" asp-controller="Dashboard" asp-action="Index">
+                                    <i class="fa-solid fa-house me-1"></i> Home
+                                </a>
+                            }
                         </li>
 
-                        @* Admin & Teacher Menus *@
+                        @* 2. ADMIN & TEACHER SHARED MENUS *@
                         @if (SignInManager.IsSignedIn(User) && (User.IsInRole("Admin") || User.IsInRole("Teacher")))
                         {
                             <li class="nav-item dropdown">
@@ -68,7 +86,7 @@
                                 </a>
                                 <div class="dropdown-menu">
                                     <a class="dropdown-item" asp-controller="Students" asp-action="Index">List All Students</a>
-                                    <a class="dropdown-item" asp-controller="Students" asp-action="Create">Register Student</a>
+                                    <a class="dropdown-item" asp-controller="Students" asp-action="Create">Register New Student</a>
                                 </div>
                             </li>
 
@@ -77,8 +95,11 @@
                                     <i class="fa-solid fa-chalkboard-user me-1"></i> Teachers
                                 </a>
                                 <div class="dropdown-menu">
-                                    <a class="dropdown-item" asp-controller="Teachers" asp-action="Index">All Teachers</a>
-                                    <a class="dropdown-item" asp-controller="Teachers" asp-action="Create">Add New Teacher</a>
+                                    <a class="dropdown-item" asp-controller="Teachers" asp-action="Index">Faculty Directory</a>
+                                    @if (User.IsInRole("Admin"))
+                                    {
+                                        <a class="dropdown-item" asp-controller="Teachers" asp-action="Create">Add New Teacher</a>
+                                    }
                                 </div>
                             </li>
 
@@ -88,11 +109,11 @@
                                 </a>
                                 <div class="dropdown-menu">
                                     <h6 class="dropdown-header">Courses</h6>
-                                    <a class="dropdown-item" asp-controller="Courses" asp-action="Index">Course List</a>
-                                    <a class="dropdown-item" asp-controller="Courses" asp-action="Create">Add Course</a>
+                                    <a class="dropdown-item" asp-controller="Courses" asp-action="Index">View Catalog</a>
+                                    <a class="dropdown-item" asp-controller="Courses" asp-action="Create">Create Course</a>
                                     <div class="dropdown-divider"></div>
-                                    <h6 class="dropdown-header">Enrollment</h6>
-                                    <a class="dropdown-item" asp-controller="Enrollments" asp-action="Index">Enrollments & Grades</a>
+                                    <h6 class="dropdown-header">Enrollment & Grades</h6>
+                                    <a class="dropdown-item" asp-controller="Enrollments" asp-action="Index">Manage Records</a>
                                     <a class="dropdown-item" asp-controller="Enrollments" asp-action="Create">New Enrollment</a>
                                 </div>
                             </li>
@@ -103,17 +124,28 @@
                                 </a>
                                 <div class="dropdown-menu">
                                     <a class="dropdown-item" asp-controller="Attendances" asp-action="Index">History</a>
-                                    <a class="dropdown-item" asp-controller="Attendances" asp-action="Create">Mark Daily Attendance</a>
+                                    <a class="dropdown-item" asp-controller="Attendances" asp-action="Create">Mark Attendance</a>
                                 </div>
+                            </li>
+                        }
+
+                        @* 3. STUDENT ONLY LINK *@
+                        @if (SignInManager.IsSignedIn(User) && User.IsInRole("Student"))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Enrollments" asp-action="Index">
+                                    <i class="fa-solid fa-award me-1"></i> My Grades & Results
+                                </a>
                             </li>
                         }
                     </ul>
 
+                    @* Search & Login *@
                     <div class="d-flex align-items-center">
-                        @if (SignInManager.IsSignedIn(User) && (User.IsInRole("Admin") || User.IsInRole("Teacher")))
+                        @if (SignInManager.IsSignedIn(User) && !User.IsInRole("Student"))
                         {
                             <form class="d-flex me-3" asp-controller="Students" asp-action="Index" method="get">
-                                <input class="form-control me-sm-2" type="search" name="searchString" placeholder="Search Students..." />
+                                <input class="form-control me-sm-2" type="search" name="searchString" placeholder="Find Student..." />
                                 <button class="btn btn-secondary my-2 my-sm-0" type="submit">Search</button>
                             </form>
                         }
@@ -132,7 +164,7 @@
 
     <footer class="footer text-muted py-3 shadow-lg mt-auto">
         <div class="container text-center">
-            <span>&copy; 2026 - <strong>NMEIS Student System</strong> - Developed by <b>Mustafa Muhammad Iqbal</b></span>
+            <span>&copy; 2026 - <strong>NMEIS Student Management System</strong> - Developed by <b>Mustafa Muhammad Iqbal</b></span>
             <span class="mx-2">|</span>
             <a asp-controller="Home" asp-action="Privacy" class="text-decoration-none text-primary">Privacy Policy</a>
         </div>

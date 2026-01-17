@@ -1,40 +1,62 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Authorization;
 using SMS.Data;
 using SMS.Models.Entities;
-using SMS.Services; // Email service ke liye
 
 namespace SMS.Controllers
 {
+    [Authorize(Roles = "Admin,Teacher")] // 👈 RBAC: Sirf Authorized staff hi access kar sakta hai
     public class StudentsController : Controller
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
-        private readonly IEmailService _emailService;
 
-        public StudentsController(ApplicationDbContext context, UserManager<ApplicationUser> userManager, IEmailService emailService)
+        public StudentsController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
         {
             _context = context;
             _userManager = userManager;
-            _emailService = emailService; // Service inject ho rahi hai
         }
 
-        // 1. INDEX: Saare students ki list dikhana
+        // GET: Students
         public async Task<IActionResult> Index()
         {
-            // .Include(s => s.User) taake GUID ki jagah FullName dikhe
-            var students = await _context.Students.Include(s => s.User).ToListAsync();
-            return View(students);
+            var userId = _userManager.GetUserId(User);
+
+            // 1. Agar Admin hai toh saari list dikhao
+            if (User.IsInRole("Admin"))
+            {
+                return View(await _context.Students.Include(s => s.User).ToListAsync());
+            }
+
+            // 2. Agar Teacher hai toh sirf apne courses ke enrolled students dikhao
+            if (User.IsInRole("Teacher"))
+            {
+                var teacher = await _context.Teachers.FirstOrDefaultAsync(t => t.UserId == userId);
+                if (teacher == null) return NotFound("Teacher Profile Not Found");
+
+                var myStudents = await _context.Enrollments
+                    .Where(e => e.Course.TeacherId == teacher.Id)
+                    .Select(e => e.Student)
+                    .Distinct()
+                    .Include(s => s.User)
+                    .ToListAsync();
+
+                return View(myStudents);
+            }
+
+            return View(new List<Student>());
         }
 
-        // 2. DETAILS: Student ki mukammal profile
+        // GET: Students/Details/5
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null) return NotFound();
 
             var student = await _context.Students
                 .Include(s => s.User)
+                .Include(s => s.Enrollments).ThenInclude(e => e.Course)
                 .FirstOrDefaultAsync(m => m.Id == id);
 
             if (student == null) return NotFound();
@@ -42,66 +64,47 @@ namespace SMS.Controllers
             return View(student);
         }
 
-        // 3. CREATE (GET)
-        public IActionResult Create() => View();
+        // GET: Students/Create
+        [Authorize(Roles = "Admin")] // 👈 Security: Registration sirf Admin kar sakta hai
+        public IActionResult Create()
+        {
+            return View();
+        }
 
-        // 4. CREATE (POST): Account banana aur Email bhejna
+        // POST: Students/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Create(Student student, string Email, string Password, string FullName)
         {
-            // Navigation properties ko validation se hatana lazmi hai
-            ModelState.Remove("User");
-            ModelState.Remove("UserId");
-            ModelState.Remove("Enrollments");
-
             if (ModelState.IsValid)
             {
-                // Step A: Identity User banana
-                var user = new ApplicationUser
-                {
-                    UserName = Email,
-                    Email = Email,
-                    FullName = FullName // SQL NULL error fix
-                };
-
+                // 1. Create Identity User
+                var user = new ApplicationUser { UserName = Email, Email = Email, FullName = FullName };
                 var result = await _userManager.CreateAsync(user, Password);
 
                 if (result.Succeeded)
                 {
-                    // Step B: Role assign karna
+                    // 2. Assign Student Role
                     await _userManager.AddToRoleAsync(user, "Student");
 
-                    // Step C: Student record link karna
+                    // 3. Link Student record with Identity ID
                     student.UserId = user.Id;
                     _context.Add(student);
                     await _context.SaveChangesAsync();
-
-                    // Step D: Welcome Email bhejna
-                    try
-                    {
-                        string subject = "NMEIS Portal - Registration Successful";
-                        string body = $"<h3>Welcome {FullName}!</h3>" +
-                                      $"<p>Your account has been created successfully.</p>" +
-                                      $"<p><b>Registration ID:</b> {student.StudentRegId}</p>" +
-                                      $"<p><b>Login Email:</b> {Email}</p>";
-
-                        await _emailService.SendEmailAsync(Email, subject, body);
-                    }
-                    catch { /* Email fail hone par project crash na ho */ }
 
                     return RedirectToAction(nameof(Index));
                 }
 
                 foreach (var error in result.Errors)
                 {
-                    ModelState.AddModelError("", error.Description);
+                    ModelState.AddModelError(string.Empty, error.Description);
                 }
             }
             return View(student);
         }
 
-        // 5. EDIT (GET)
+        // GET: Students/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null) return NotFound();
@@ -112,33 +115,19 @@ namespace SMS.Controllers
             return View(student);
         }
 
-        // 6. EDIT (POST): Update details
+        // POST: Students/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, Student student, string FullName)
+        public async Task<IActionResult> Edit(int id, Student student)
         {
             if (id != student.Id) return NotFound();
-
-            ModelState.Remove("User");
-            ModelState.Remove("UserId");
-            ModelState.Remove("Enrollments");
 
             if (ModelState.IsValid)
             {
                 try
                 {
-                    var existingStudent = await _context.Students.Include(s => s.User).FirstOrDefaultAsync(s => s.Id == id);
-
-                    if (existingStudent != null && existingStudent.User != null)
-                    {
-                        // Dono tables (Student & AspNetUsers) update ho rahi hain
-                        existingStudent.User.FullName = FullName;
-                        existingStudent.StudentRegId = student.StudentRegId;
-                        existingStudent.Department = student.Department;
-
-                        _context.Update(existingStudent);
-                        await _context.SaveChangesAsync();
-                    }
+                    _context.Update(student);
+                    await _context.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)
                 {
@@ -150,41 +139,24 @@ namespace SMS.Controllers
             return View(student);
         }
 
-        // 7. DELETE (GET)
-        public async Task<IActionResult> Delete(int? id)
-        {
-            if (id == null) return NotFound();
-
-            var student = await _context.Students
-                .Include(s => s.User)
-                .FirstOrDefaultAsync(m => m.Id == id);
-
-            if (student == null) return NotFound();
-
-            return View(student);
-        }
-
-        // 8. DELETE (POST): Account aur Record dono khatam karna
+        // POST: Students/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")] // 👈 Security: Sirf Admin delete kar sakta hai
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var student = await _context.Students.Include(s => s.User).FirstOrDefaultAsync(s => s.Id == id);
-
+            var student = await _context.Students.FindAsync(id);
             if (student != null)
             {
-                // Cascade Delete logic: Pehle User account delete karein
-                if (student.User != null)
-                {
-                    await _userManager.DeleteAsync(student.User);
-                }
                 _context.Students.Remove(student);
-                await _context.SaveChangesAsync();
             }
-
+            await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
-        private bool StudentExists(int id) => _context.Students.Any(e => e.Id == id);
+        private bool StudentExists(int id)
+        {
+            return _context.Students.Any(e => e.Id == id);
+        }
     }
 }

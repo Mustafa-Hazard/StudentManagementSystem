@@ -1,10 +1,13 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
 using SMS.Data;
 using SMS.Models.Entities;
 
 namespace SMS.Controllers
 {
+    // 👈 RBAC: Sirf Admin aur Teacher hi Courses manage kar sakte hain
+    [Authorize(Roles = "Admin,Teacher")]
     public class CoursesController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -17,14 +20,16 @@ namespace SMS.Controllers
         // GET: Courses
         public async Task<IActionResult> Index()
         {
-            // Saare courses ki list dikhana
-            return View(await _context.Courses.ToListAsync());
+            // Saare courses ki list database se nikal kar View ko bhejna
+            var courses = await _context.Courses.ToListAsync();
+            return View(courses);
         }
 
         // GET: Courses/Create
         public IActionResult Create()
         {
-            return View();
+            // 👈 Safety: Aik khali object bhejna taake View crash na ho
+            return View(new Course());
         }
 
         // POST: Courses/Create
@@ -32,7 +37,7 @@ namespace SMS.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(Course course)
         {
-            // IMPORTANT: Agar Course model mein Enrollments hain, toh unhe yahan se remove karein
+            // 👈 IMPORTANT FIX: Enrollments collection ko validation se nikalna
             ModelState.Remove("Enrollments");
 
             if (ModelState.IsValid)
@@ -42,7 +47,7 @@ namespace SMS.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            // Agar validation fail ho jaye toh wapas view par bhein
+            // Agar validation fail ho jaye toh error ke sath wapas bhein
             return View(course);
         }
 
@@ -64,6 +69,7 @@ namespace SMS.Controllers
         {
             if (id != course.Id) return NotFound();
 
+            // 👈 Edit mein bhi Enrollments ko remove karna zaroori hai
             ModelState.Remove("Enrollments");
 
             if (ModelState.IsValid)

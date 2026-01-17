@@ -1,68 +1,113 @@
-﻿@model SMS.Models.DashboardViewModel
+﻿@model SMS.Models.ViewModels.DashboardViewModel
+@using Microsoft.AspNetCore.Identity
+@using SMS.Models.Entities
+@inject UserManager<ApplicationUser> UserManager
 
 @{
-    ViewData["Title"] = "Admin Dashboard";
+    ViewData["Title"] = "Admin Dashboard - NMEIS";
+    // Logged-in user ka name nikalne ke liye
+    var currentUser = await UserManager.GetUserAsync(User);
 }
 
-<div class="container mt-4">
-    <h2 class="mb-4">SMS Dashboard Summary</h2>
+<div class="container-fluid py-4">
+    @* Change: Welcome message ko dynamic kar diya hai *@
+    <h2 class="mb-4">Welcome, @(currentUser?.FullName ?? "Mustafa Muhammad Iqbal")!</h2>
 
-    <div class="row">
-        <div class="col-md-3">
-            <div class="card bg-primary text-white shadow mb-4">
-                <div class="card-body text-center">
-                    <h5>Total Students</h5>
-                    <h2 class="display-4">@Model.TotalStudents</h2>
+    <div class="row mb-4">
+        @* Total Students Card *@
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2 border-0 border-start border-primary border-4">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Students</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.TotalStudents</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-user-graduate fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card bg-success text-white shadow mb-4">
-                <div class="card-body text-center">
-                    <h5>Total Courses</h5>
-                    <h2 class="display-4">@Model.TotalCourses</h2>
+
+        @* Total Teachers Card - FIX: Yahan TotalTeachers use hoga *@
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2 border-0 border-start border-success border-4">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Total Teachers</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.TotalStudents</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-chalkboard-teacher fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card bg-info text-white shadow mb-4">
-                <div class="card-body text-center">
-                    <h5>Enrollments</h5>
-                    <h2 class="display-4">@Model.TotalEnrollments</h2>
+
+        @* Courses Card *@
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2 border-0 border-start border-info border-4">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Courses Offered</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.TotalCourses</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-book fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card bg-warning text-dark shadow mb-4">
-                <div class="card-body text-center">
-                    <h5>Avg. Marks</h5>
-                    <h2 class="display-4">@Math.Round(Model.AverageMarks, 1)%</h2>
+
+        @* Enrollments Card *@
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2 border-0 border-start border-warning border-4">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Enrollments</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.TotalEnrollments</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-file-contract fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="row mt-4">
-        <div class="col-md-6">
-            <div class="card shadow">
-                <div class="card-header bg-dark text-white">
-                    <h5 class="mb-0">Recently Joined Students</h5>
+    <div class="row">
+        @* Recent Students Table *@
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 bg-white">
+                    <h6 class="m-0 font-weight-bold text-primary">Newly Registered Students</h6>
                 </div>
                 <div class="card-body">
                     <table class="table table-sm">
                         <thead>
                             <tr>
-                                <th>Reg ID</th>
                                 <th>Name</th>
+                                <th>Department</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach (var s in Model.RecentStudents)
+                            @if (Model.RecentStudents != null)
                             {
-                                <tr>
-                                    <td>@s.StudentRegId</td>
-                                    <td>@s.User?.FullName</td>
-                                </tr>
+                                foreach (var student in Model.RecentStudents)
+                                {
+                                    <tr>
+                                        <td>@(student.User?.FullName ?? "N/A")</td>
+                                        <td><span class="badge bg-light text-dark">@student.Department</span></td>
+                                    </tr>
+                                }
                             }
                         </tbody>
                     </table>
@@ -70,10 +115,11 @@
             </div>
         </div>
 
-        <div class="col-md-6">
-            <div class="card shadow">
-                <div class="card-header bg-secondary text-white">
-                    <h5 class="mb-0">Latest Enrollments</h5>
+        @* Recent Enrollments Table *@
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 bg-white">
+                    <h6 class="m-0 font-weight-bold text-success">Recent Course Enrollments</h6>
                 </div>
                 <div class="card-body">
                     <table class="table table-sm">
@@ -81,17 +127,18 @@
                             <tr>
                                 <th>Student</th>
                                 <th>Course</th>
-                                <th>Grade</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach (var e in Model.RecentEnrollments)
+                            @if (Model.RecentEnrollments != null)
                             {
-                                <tr>
-                                    <td>@e.Student?.User?.FullName</td>
-                                    <td>@e.Course?.Title</td>
-                                    <td><span class="badge bg-primary">@e.Grade</span></td>
-                                </tr>
+                                foreach (var enrollment in Model.RecentEnrollments)
+                                {
+                                    <tr>
+                                        <td>@(enrollment.Student?.User?.FullName ?? "N/A")</td>
+                                        <td>@enrollment.Course?.Title</td>
+                                    </tr>
+                                }
                             }
                         </tbody>
                     </table>
