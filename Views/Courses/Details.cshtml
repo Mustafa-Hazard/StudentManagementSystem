@@ -1,36 +1,19 @@
 ﻿@model SMS.Models.Entities.Course
 
-@{
-    ViewData["Title"] = "Details";
-}
+<div class="card shadow">
+    <div class="card-header bg-info text-white">
+        <h4>Course: @Model.Title (@Model.CourseCode)</h4>
+    </div>
+    <div class="card-body">
+        <p><strong>Instructor:</strong> @Model.Teacher?.User?.FullName</p>
+        <p><strong>Credits:</strong> @Model.Credits</p>
 
-<h1>Details</h1>
-
-<div>
-    <h4>Course</h4>
-    <hr />
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.CourseCode)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.CourseCode)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Title)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Title)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Credits)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Credits)
-        </dd>
-    </dl>
-</div>
-<div>
-    <a asp-action="Edit" asp-route-id="@Model?.Id">Edit</a> |
-    <a asp-action="Index">Back to List</a>
+        <h5 class="mt-4">Enrolled Students</h5>
+        <ul class="list-group">
+            @foreach (var enrollment in Model.Enrollments)
+            {
+                <li class="list-group-item">@enrollment.Student?.User?.FullName</li>
+            }
+        </ul>
+    </div>
 </div>

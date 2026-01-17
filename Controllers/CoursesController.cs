@@ -1,51 +1,81 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc.Rendering; // 👈 Zaruri: Dropdown ke liye
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using SMS.Data;
 using SMS.Models.Entities;
 
 namespace SMS.Controllers
 {
-    [Authorize(Roles = "Admin,Teacher")]
+    [Authorize(Roles = "Admin,Teacher")] //
     public class CoursesController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public CoursesController(ApplicationDbContext context)
+        public CoursesController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
         {
             _context = context;
+            _userManager = userManager;
         }
 
-        // GET: Courses
+        // 🟢 INDEX: Role-based filtering
         public async Task<IActionResult> Index()
         {
-            // 👈 Change: Teacher ka data bhi sath layein taake list mein teacher ka naam nazar aaye
-            var courses = await _context.Courses
-                .Include(c => c.Teacher)
-                .ThenInclude(t => t.User)
+            var userId = _userManager.GetUserId(User);
+
+            if (User.IsInRole("Admin"))
+            {
+                // Admin saare courses dekh sakta hai
+                return View(await _context.Courses.Include(c => c.Teacher).ThenInclude(t => t.User).ToListAsync());
+            }
+
+            // Teacher sirf apne assigned courses dekhega
+            var teacher = await _context.Teachers.FirstOrDefaultAsync(t => t.UserId == userId);
+            if (teacher == null) return NotFound();
+
+            var myCourses = await _context.Courses
+                .Include(c => c.Teacher).ThenInclude(t => t.User)
+                .Where(c => c.TeacherId == teacher.Id)
                 .ToListAsync();
-            return View(courses);
+
+            return View(myCourses);
         }
 
-        // GET: Courses/Create
+        // 🔵 DETAILS:
+        public async Task<IActionResult> Details(int? id)
+        {
+            if (id == null) return NotFound();
+
+            var course = await _context.Courses
+                .Include(c => c.Teacher).ThenInclude(t => t.User)
+                .Include(c => c.Enrollments).ThenInclude(e => e.Student).ThenInclude(s => s.User)
+                .FirstOrDefaultAsync(m => m.Id == id);
+
+            if (course == null) return NotFound();
+
+            return View(course);
+        }
+
+        // 🟡 CREATE (GET): Sirf Admin ke liye
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Create()
         {
-            // 👈 Change: Dropdown bharne ke liye teachers ki list bhejna
             var teachers = await _context.Teachers.Include(t => t.User).ToListAsync();
             ViewBag.TeacherId = new SelectList(teachers, "Id", "User.FullName");
-
             return View(new Course());
         }
 
-        // POST: Courses/Create
+        // 🟡 CREATE (POST): Server-side Validation
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Create(Course course)
         {
-            // 👈 Change: Navigation properties ko validation se nikalna taake "Required" error na aaye
-            ModelState.Remove("Enrollments");
+            // Navigation properties ko validation se hatana
             ModelState.Remove("Teacher");
+            ModelState.Remove("Enrollments");
 
             if (ModelState.IsValid)
             {
@@ -54,13 +84,12 @@ namespace SMS.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            // Agar validation fail ho jaye toh dropdown dobara bharein
             var teachers = await _context.Teachers.Include(t => t.User).ToListAsync();
             ViewBag.TeacherId = new SelectList(teachers, "Id", "User.FullName", course.TeacherId);
             return View(course);
         }
 
-        // GET: Courses/Edit/5
+        // 🟠 EDIT (GET): Admin ya wahi Teacher jis ka course hai
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null) return NotFound();
@@ -68,22 +97,20 @@ namespace SMS.Controllers
             var course = await _context.Courses.FindAsync(id);
             if (course == null) return NotFound();
 
-            // 👈 Change: Edit page par bhi teacher select karne ka dropdown hona chahiye
             var teachers = await _context.Teachers.Include(t => t.User).ToListAsync();
             ViewBag.TeacherId = new SelectList(teachers, "Id", "User.FullName", course.TeacherId);
-
             return View(course);
         }
 
-        // POST: Courses/Edit/5
+        // 🟠 EDIT (POST):
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, Course course)
         {
             if (id != course.Id) return NotFound();
 
-            ModelState.Remove("Enrollments");
             ModelState.Remove("Teacher");
+            ModelState.Remove("Enrollments");
 
             if (ModelState.IsValid)
             {
@@ -94,35 +121,12 @@ namespace SMS.Controllers
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!CourseExists(course.Id)) return NotFound();
+                    if (!_context.Courses.Any(e => e.Id == course.Id)) return NotFound();
                     else throw;
                 }
                 return RedirectToAction(nameof(Index));
             }
-
-            var teachers = await _context.Teachers.Include(t => t.User).ToListAsync();
-            ViewBag.TeacherId = new SelectList(teachers, "Id", "User.FullName", course.TeacherId);
             return View(course);
-        }
-
-        // POST: Courses/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
-        {
-            var course = await _context.Courses.FindAsync(id);
-            if (course != null)
-            {
-                _context.Courses.Remove(course);
-            }
-
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
-        }
-
-        private bool CourseExists(int id)
-        {
-            return _context.Courses.Any(e => e.Id == id);
         }
     }
 }

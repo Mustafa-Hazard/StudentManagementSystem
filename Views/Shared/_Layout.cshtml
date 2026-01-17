@@ -9,49 +9,17 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - NMEIS Portal</title>
-
-    @* Bootswatch Flatly Theme & Font Awesome Icons *@
+    @* Bootswatch Flatly Theme & Font Awesome *@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/5.3.2/flatly/bootstrap.min.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/SMS.styles.css" asp-append-version="true" />
-
-    <style>
-        .navbar-brand {
-            font-weight: 800;
-            letter-spacing: 1px;
-        }
-
-        .dropdown-menu {
-            border-radius: 10px;
-            border: none;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-        }
-
-        .nav-link {
-            font-weight: 500;
-        }
-
-        footer {
-            background: #f8f9fa;
-            border-top: 1px solid #dee2e6;
-        }
-
-        .navbar {
-            transition: all 0.3s ease;
-        }
-
-        .nav-item .active {
-            border-bottom: 2px solid #fff;
-        }
-    </style>
 </head>
 <body class="d-flex flex-column min-vh-100">
     <header>
-        <nav class="navbar navbar-expand-lg bg-primary shadow-sm" data-bs-theme="dark">
+        <nav class="navbar navbar-expand-lg bg-primary shadow-sm mb-3" data-bs-theme="dark">
             <div class="container-fluid">
-                @* Logic: Logo link based on User Role *@
-                <a class="navbar-brand" asp-controller="Dashboard" asp-action="@(User.IsInRole("Student") ? "StudentIndex" : "Index")">
+                @* Role-based Brand Link *@
+                <a class="navbar-brand fw-bold" asp-controller="Dashboard" asp-action="@(User.IsInRole("Student") ? "StudentIndex" : "Index")">
                     <i class="fa-solid fa-shield-halved me-2"></i>NMEIS
                 </a>
 
@@ -60,113 +28,66 @@
                 </button>
 
                 <div class="collapse navbar-collapse" id="navbarColor01">
-                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                        @* 1. UNIVERSAL HOME LINK *@
-                        <li class="nav-item">
-                            @if (User.IsInRole("Student"))
-                            {
-                                <a class="nav-link" asp-controller="Dashboard" asp-action="StudentIndex">
-                                    <i class="fa-solid fa-house me-1"></i> My Dashboard
-                                </a>
-                            }
-                            else
-                            {
-                                <a class="nav-link" asp-controller="Dashboard" asp-action="Index">
-                                    <i class="fa-solid fa-house me-1"></i> Home
-                                </a>
-                            }
-                        </li>
-
-                        @* 2. ADMIN & TEACHER SHARED MENUS *@
-                        @if (SignInManager.IsSignedIn(User) && (User.IsInRole("Admin") || User.IsInRole("Teacher")))
-                        {
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button">
-                                    <i class="fa-solid fa-user-graduate me-1"></i> Students
-                                </a>
-                                <div class="dropdown-menu">
-                                    <a class="dropdown-item" asp-controller="Students" asp-action="Index">List All Students</a>
-                                    <a class="dropdown-item" asp-controller="Students" asp-action="Create">Register New Student</a>
-                                </div>
-                            </li>
-
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button">
-                                    <i class="fa-solid fa-chalkboard-user me-1"></i> Teachers
-                                </a>
-                                <div class="dropdown-menu">
-                                    <a class="dropdown-item" asp-controller="Teachers" asp-action="Index">Faculty Directory</a>
-                                    @if (User.IsInRole("Admin"))
-                                    {
-                                        <a class="dropdown-item" asp-controller="Teachers" asp-action="Create">Add New Teacher</a>
-                                    }
-                                </div>
-                            </li>
-
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button">
-                                    <i class="fa-solid fa-book me-1"></i> Academic
-                                </a>
-                                <div class="dropdown-menu">
-                                    <h6 class="dropdown-header">Courses</h6>
-                                    <a class="dropdown-item" asp-controller="Courses" asp-action="Index">View Catalog</a>
-                                    <a class="dropdown-item" asp-controller="Courses" asp-action="Create">Create Course</a>
-                                    <div class="dropdown-divider"></div>
-                                    <h6 class="dropdown-header">Enrollment & Grades</h6>
-                                    <a class="dropdown-item" asp-controller="Enrollments" asp-action="Index">Manage Records</a>
-                                    <a class="dropdown-item" asp-controller="Enrollments" asp-action="Create">New Enrollment</a>
-                                </div>
-                            </li>
-
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button">
-                                    <i class="fa-solid fa-calendar-check me-1"></i> Attendance
-                                </a>
-                                <div class="dropdown-menu">
-                                    <a class="dropdown-item" asp-controller="Attendances" asp-action="Index">History</a>
-                                    <a class="dropdown-item" asp-controller="Attendances" asp-action="Create">Mark Attendance</a>
-                                </div>
-                            </li>
-                        }
-
-                        @* 3. STUDENT ONLY LINK *@
-                        @if (SignInManager.IsSignedIn(User) && User.IsInRole("Student"))
+                    <ul class="navbar-nav me-auto">
+                        @* 🟢 SHARED LINKS (Always Visible if Authenticated) *@
+                        @if (SignInManager.IsSignedIn(User))
                         {
                             <li class="nav-item">
-                                <a class="nav-link" asp-controller="Enrollments" asp-action="Index">
-                                    <i class="fa-solid fa-award me-1"></i> My Grades & Results
+                                <a class="nav-link" asp-controller="Dashboard" asp-action="@(User.IsInRole("Student") ? "StudentIndex" : "Index")">
+                                    <i class="fa-solid fa-house me-1"></i> Home
                                 </a>
                             </li>
+
+                            @* 🟡 ADMIN & TEACHER ONLY MENUS *@
+                            @if (User.IsInRole("Admin") || User.IsInRole("Teacher"))
+                            {
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#"><i class="fa-solid fa-users me-1"></i> Management</a>
+                                    <div class="dropdown-menu">
+                                        <a class="dropdown-item" asp-controller="Students" asp-action="Index">Students Directory</a>
+                                        @if (User.IsInRole("Admin"))
+                                        {
+                                            <a class="dropdown-item" asp-controller="Teachers" asp-action="Index">Faculty Management</a>
+                                        }
+                                        <div class="dropdown-divider"></div>
+                                        <a class="dropdown-item" asp-controller="Courses" asp-action="Index">Course Catalog</a>
+                                    </div>
+                                </li>
+                            }
+
+                            @* 🔵 STUDENT ONLY LINKS *@
+                            @if (User.IsInRole("Student"))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-controller="Enrollments" asp-action="Index">
+                                        <i class="fa-solid fa-award me-1"></i> My Grades
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    @* PDF Transcript Link *@
+                                    <a class="nav-link text-warning" asp-controller="Students" asp-action="DownloadTranscript">
+                                        <i class="fa-solid fa-file-pdf me-1"></i> Download Transcript
+                                    </a>
+                                </li>
+                            }
                         }
                     </ul>
-
-                    @* Search & Login *@
-                    <div class="d-flex align-items-center">
-                        @if (SignInManager.IsSignedIn(User) && !User.IsInRole("Student"))
-                        {
-                            <form class="d-flex me-3" asp-controller="Students" asp-action="Index" method="get">
-                                <input class="form-control me-sm-2" type="search" name="searchString" placeholder="Find Student..." />
-                                <button class="btn btn-secondary my-2 my-sm-0" type="submit">Search</button>
-                            </form>
-                        }
-                        <partial name="_LoginPartial" />
-                    </div>
+                    @* Login Partial for Identity Account Links *@
+                    <partial name="_LoginPartial" />
                 </div>
             </div>
         </nav>
     </header>
 
-    <div class="container flex-grow-1 my-4">
+    <div class="container flex-grow-1">
         <main role="main" class="pb-3">
             @RenderBody()
         </main>
     </div>
 
-    <footer class="footer text-muted py-3 shadow-lg mt-auto">
+    <footer class="footer text-muted py-3 bg-light border-top mt-auto">
         <div class="container text-center">
-            <span>&copy; 2026 - <strong>NMEIS Student Management System</strong> - Developed by <b>Mustafa Muhammad Iqbal</b></span>
-            <span class="mx-2">|</span>
-            <a asp-controller="Home" asp-action="Privacy" class="text-decoration-none text-primary">Privacy Policy</a>
+            &copy; 2026 - <strong>NMEIS Student System</strong> - Designed by <b>Mustafa Muhammad Iqbal</b>
         </div>
     </footer>
 

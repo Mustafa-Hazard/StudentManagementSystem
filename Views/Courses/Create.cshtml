@@ -1,57 +1,27 @@
 ﻿@model SMS.Models.Entities.Course
 
-@{
-    ViewData["Title"] = "Add New Course";
-}
+<form asp-action="Create">
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-6 shadow p-4 rounded bg-white border-top border-success border-4">
-            <h4 class="text-center mb-4"><i class="fa-solid fa-plus-circle me-2"></i>Create New Course</h4>
-
-            <form asp-action="Create">
-                <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
-
-                <div class="mb-3">
-                    <label asp-for="Title" class="form-label fw-bold">Course Title</label>
-                    <input asp-for="Title" class="form-control" placeholder="e.g. Software Construction" />
-                    <span asp-validation-for="Title" class="text-danger"></span>
-                </div>
-
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label asp-for="CourseCode" class="form-label fw-bold">Course Code</label>
-                        <input asp-for="CourseCode" class="form-control" placeholder="CS-301" />
-                        <span asp-validation-for="CourseCode" class="text-danger"></span>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label asp-for="Credits" class="form-label fw-bold">Credit Hours</label>
-                        <input asp-for="Credits" type="number" class="form-control" min="1" max="4" />
-                        <span asp-validation-for="Credits" class="text-danger"></span>
-                    </div>
-                </div>
-
-                @* 👈 New: Teacher Selection Dropdown *@
-                <div class="mb-3">
-                    <label asp-for="TeacherId" class="form-label fw-bold">Assign Teacher</label>
-                    <select asp-for="TeacherId" class="form-select" asp-items="ViewBag.TeacherId">
-                        <option value="">-- Select Teacher --</option>
-                    </select>
-                    <span asp-validation-for="TeacherId" class="text-danger"></span>
-                </div>
-
-                @* 👈 New: Course Description *@
-                <div class="mb-3">
-                    <label asp-for="Description" class="form-label fw-bold">Description</label>
-                    <textarea asp-for="Description" class="form-control" rows="3" placeholder="Brief course overview..."></textarea>
-                    <span asp-validation-for="Description" class="text-danger"></span>
-                </div>
-
-                <div class="d-grid gap-2 mt-4">
-                    <button type="submit" class="btn btn-success fw-bold">Save Course</button>
-                    <a asp-action="Index" class="btn btn-light border">Back to List</a>
-                </div>
-            </form>
-        </div>
+    <div class="form-group mb-3">
+        <label asp-for="Title" class="control-label fw-bold"></label>
+        <input asp-for="Title" class="form-control" />
+        <span asp-validation-for="Title" class="text-danger"></span>
     </div>
-</div>
+
+    <div class="form-group mb-3">
+        <label asp-for="TeacherId" class="control-label fw-bold">Assign Teacher</label>
+        <select asp-for="TeacherId" class="form-control" asp-items="ViewBag.TeacherId">
+            <option value="">-- Select --</option>
+        </select>
+        <span asp-validation-for="TeacherId" class="text-danger"></span>
+    </div>
+
+    <button type="submit" class="btn btn-success">Save Course</button>
+</form>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

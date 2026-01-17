@@ -1,9 +1,11 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Rotativa.AspNetCore;
 using SMS.Data;
 using SMS.Models.Entities;
+using SMS.Models.ViewModels;
 
 namespace SMS.Controllers
 {
@@ -153,7 +155,36 @@ namespace SMS.Controllers
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
+        [Authorize(Roles = "Admin,Student")] //
+        public async Task<IActionResult> DownloadTranscript(int id)
+        {
+            // 1. Student aur uski enrollments ka data nikalna
+            var student = await _context.Students
+                .Include(s => s.User)
+                .Include(s => s.Enrollments).ThenInclude(e => e.Course)
+                .FirstOrDefaultAsync(s => s.Id == id);
 
+            if (student == null) return NotFound();
+
+            // 2. GPA Calculate karna
+            double totalMarks = student.Enrollments.Where(e => e.Marks != null).Sum(e => (double)e.Marks);
+            double avgMarks = student.Enrollments.Any() ? totalMarks / student.Enrollments.Count : 0;
+
+            var viewModel = new TranscriptViewModel
+            {
+                Student = student,
+                Enrollments = student.Enrollments.ToList(),
+                TotalGPA = avgMarks // Aap apne formula ke mutabiq change kar sakte hain
+            };
+
+            // 3. View ko PDF mein convert karke bhein
+            return new ViewAsPdf("TranscriptPDF", viewModel)
+            {
+                FileName = $"Transcript_{student.StudentRegId}.pdf",
+                PageSize = Rotativa.AspNetCore.Options.Size.A4,
+                CustomSwitches = "--footer-center \"Printed by NMEIS Portal\" --footer-font-size \"10\""
+            };
+        }
         private bool StudentExists(int id)
         {
             return _context.Students.Any(e => e.Id == id);

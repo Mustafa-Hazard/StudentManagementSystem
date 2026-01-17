@@ -61,7 +61,7 @@ namespace SMS.Controllers
 
             var viewModel = new StudentDashboardViewModel
             {
-                StudentName = student.User?.FullName ?? "Mustafa Muhammad Iqbal",
+                StudentName = student.User?.FullName,
                 RegId = student.StudentRegId,
                 MyCourses = enrollments
             };
