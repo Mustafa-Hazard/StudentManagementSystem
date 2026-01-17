@@ -31,6 +31,22 @@
                     </div>
                 </div>
 
+                @* 👈 New: Teacher Selection Dropdown *@
+                <div class="mb-3">
+                    <label asp-for="TeacherId" class="form-label fw-bold">Assign Teacher</label>
+                    <select asp-for="TeacherId" class="form-select" asp-items="ViewBag.TeacherId">
+                        <option value="">-- Select Teacher --</option>
+                    </select>
+                    <span asp-validation-for="TeacherId" class="text-danger"></span>
+                </div>
+
+                @* 👈 New: Course Description *@
+                <div class="mb-3">
+                    <label asp-for="Description" class="form-label fw-bold">Description</label>
+                    <textarea asp-for="Description" class="form-control" rows="3" placeholder="Brief course overview..."></textarea>
+                    <span asp-validation-for="Description" class="text-danger"></span>
+                </div>
+
                 <div class="d-grid gap-2 mt-4">
                     <button type="submit" class="btn btn-success fw-bold">Save Course</button>
                     <a asp-action="Index" class="btn btn-light border">Back to List</a>

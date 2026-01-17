@@ -1,12 +1,12 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc.Rendering; // 👈 Zaruri: Dropdown ke liye
 using SMS.Data;
 using SMS.Models.Entities;
 
 namespace SMS.Controllers
 {
-    // 👈 RBAC: Sirf Admin aur Teacher hi Courses manage kar sakte hain
     [Authorize(Roles = "Admin,Teacher")]
     public class CoursesController : Controller
     {
@@ -20,15 +20,21 @@ namespace SMS.Controllers
         // GET: Courses
         public async Task<IActionResult> Index()
         {
-            // Saare courses ki list database se nikal kar View ko bhejna
-            var courses = await _context.Courses.ToListAsync();
+            // 👈 Change: Teacher ka data bhi sath layein taake list mein teacher ka naam nazar aaye
+            var courses = await _context.Courses
+                .Include(c => c.Teacher)
+                .ThenInclude(t => t.User)
+                .ToListAsync();
             return View(courses);
         }
 
         // GET: Courses/Create
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
-            // 👈 Safety: Aik khali object bhejna taake View crash na ho
+            // 👈 Change: Dropdown bharne ke liye teachers ki list bhejna
+            var teachers = await _context.Teachers.Include(t => t.User).ToListAsync();
+            ViewBag.TeacherId = new SelectList(teachers, "Id", "User.FullName");
+
             return View(new Course());
         }
 
@@ -37,8 +43,9 @@ namespace SMS.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(Course course)
         {
-            // 👈 IMPORTANT FIX: Enrollments collection ko validation se nikalna
+            // 👈 Change: Navigation properties ko validation se nikalna taake "Required" error na aaye
             ModelState.Remove("Enrollments");
+            ModelState.Remove("Teacher");
 
             if (ModelState.IsValid)
             {
@@ -47,7 +54,9 @@ namespace SMS.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            // Agar validation fail ho jaye toh error ke sath wapas bhein
+            // Agar validation fail ho jaye toh dropdown dobara bharein
+            var teachers = await _context.Teachers.Include(t => t.User).ToListAsync();
+            ViewBag.TeacherId = new SelectList(teachers, "Id", "User.FullName", course.TeacherId);
             return View(course);
         }
 
@@ -59,6 +68,10 @@ namespace SMS.Controllers
             var course = await _context.Courses.FindAsync(id);
             if (course == null) return NotFound();
 
+            // 👈 Change: Edit page par bhi teacher select karne ka dropdown hona chahiye
+            var teachers = await _context.Teachers.Include(t => t.User).ToListAsync();
+            ViewBag.TeacherId = new SelectList(teachers, "Id", "User.FullName", course.TeacherId);
+
             return View(course);
         }
 
@@ -69,8 +82,8 @@ namespace SMS.Controllers
         {
             if (id != course.Id) return NotFound();
 
-            // 👈 Edit mein bhi Enrollments ko remove karna zaroori hai
             ModelState.Remove("Enrollments");
+            ModelState.Remove("Teacher");
 
             if (ModelState.IsValid)
             {
@@ -86,6 +99,9 @@ namespace SMS.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
+
+            var teachers = await _context.Teachers.Include(t => t.User).ToListAsync();
+            ViewBag.TeacherId = new SelectList(teachers, "Id", "User.FullName", course.TeacherId);
             return View(course);
         }
 
